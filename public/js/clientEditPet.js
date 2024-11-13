@@ -20,8 +20,12 @@ async function getEditPet() {
   document.querySelector("#species").value = pet.species
   document.querySelector("#description").value = pet.description
 
+  if (pet.photo) {
+    document.querySelector("#photo-preview").innerHTML = `<img src="https://res.cloudinary.com/dgz8lstvm/image/upload/w_190,h_190,c_fill/${pet.photo}.jpg" />`
+  }
+
   //remove edit page loading animation
-  document.querySelector("#edit-pet-form").classList.remove("#form-is-loading")
+  document.querySelector("#edit-pet-form").classList.remove("form-is-loading")
   document.querySelector("#name").focus()
 }
 
@@ -29,6 +33,12 @@ getEditPet()
 
 document.querySelector("#edit-pet-form").addEventListener("submit", async function (e) {
   e.preventDefault()
+
+  if (isFormLocked) {
+    return null
+  }
+
+  isFormLocked = true
 
   const pet = {
     id,
@@ -38,9 +48,15 @@ document.querySelector("#edit-pet-form").addEventListener("submit", async functi
     description: document.querySelector("#description").value
   }
 
+  if (cloudinaryReturnedObject) {
+    pet.public_id = cloudinaryReturnedObject.public_id
+    pet.version = cloudinaryReturnedObject.version
+    pet.signature = cloudinaryReturnedObject.signature
+  }
+
   document.querySelector("#edit-pet-form").classList.add("#form-is-loading")
 
-  const ourPromise = await fetch("/.netlify/functions/addPet", {
+  const ourPromise = await fetch("/.netlify/functions/saveChanges", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(pet)
